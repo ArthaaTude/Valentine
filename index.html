@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valentine</title>
+  </head>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #252432;
+      font-family: "Arial", sans-serif;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .heart-container {
+      margin: 2rem 0;
+      position: relative;
+    }
+
+    .heart {
+      fill: #ff4b6e;
+      transform-origin: center;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .message {
+      font-size: 1.5rem;
+      color: #333;
+      margin: 1rem 0;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 1s ease-out forwards;
+    }
+
+    .btn-container {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .btn {
+      background: #ff4b6e;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+    }
+
+    .btn:hover {
+      background: #ff3356;
+      transform: scale(1.05);
+    }
+
+    .btn.no {
+      background: #666;
+    }
+
+    .btn.no:hover {
+      background: #555;
+    }
+
+    .floating-hearts {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .question {
+      display: none;
+    }
+
+    .question.active {
+      display: block;
+    }
+
+    .no-btn-container {
+      position: relative;
+    }
+
+    .no-btn-container .btn.no {
+      position: relative;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0) rotate(0deg);
+      }
+      100% {
+        transform: translateY(-100vh) rotate(360deg);
+      }
+    }
+
+    .sparkle {
+      fill: #ffd700;
+      animation: sparkle 1s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+      0% {
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    .broken-heart {
+      display: none;
+      fill: #666;
+    }
+  </style>
+  <body>
+    <div class="card">
+      <div class="heart-container">
+        <svg viewBox="0 0 100 100" width="100" height="100">
+          <path
+            class="heart"
+            d="M50 88.9L16.7 55.6C7.2 46.1 7.2 30.9 16.7 21.4s24.7-9.5 34.2 0L50 20.5l-0.9 0.9c9.5-9.5 24.7-9.5 34.2 0s9.5 24.7 0 34.2L50 88.9z"
+          />
+        </svg>
+      </div>
+
+      <div class="question active" id="q1">
+        <!-- Maukah kamu menjadi Valentineku nama isikan di bawah ini -->
+        <h1 class="message">Maukah kamu menjadi Valentineku? 💝</h1>
+        <div class="btn-container">
+          <button class="btn" onclick="nextQuestion(true, 1)">Yes!</button>
+          <button class="btn no" onclick="handleNo()">Tidak</button>
+        </div>
+      </div>
+
+      <div class="question" id="q2">
+        <h1 class="message">Maukah kamu berkencan denganku? 🌹</h1>
+        <div class="btn-container">
+          <button class="btn" onclick="nextQuestion(true, 2)">Tentu saja!</button>
+          <button class="btn no" onclick="handleNo()">Mustahil</button>
+        </div>
+      </div>
+
+      <div class="question" id="q3">
+        <h1 class="message">Bolehkah aku memeluk? 🤗</h1>
+        <div class="btn-container">
+          <button class="btn" onclick="nextQuestion(true, 3)">Kemarilah!</button>
+          <button class="btn no" onclick="handleNo()">Tidak</button>
+        </div>
+      </div>
+
+      <!-- Final message and "Surat buat kamu" button -->
+      <div class="question" id="final">
+        <h1 class="message">Kamu telah membuatku menjadi orang paling bahagia yang pernah ada! ❤️</h1>
+        <div class="btn-container">
+          <button class="btn" onclick="redirectToLetter()">Surat buat kamu</button>
+        </div>
+      </div>
+
+      <div class="question" id="rejected">
+        <h1 class="message">😢 Tapi... tapi... kumohon?</h1>
+        <div class="btn-container">
+          <button class="btn" onclick="resetQuestions()">Oke, biar aku coba lagi</button>
+        </div>
+      </div>
+
+      <div class="floating-hearts"></div>
+    </div>
+
+    <script>
+      let noButtonDodgeCount = 0;
+      const maxDodges = 5;
+
+      function nextQuestion(accepted, questionNumber) {
+        if (accepted) {
+          document.querySelector(`#q${questionNumber}`).classList.remove('active');
+          if (questionNumber < 3) {
+            document.querySelector(`#q${questionNumber + 1}`).classList.add('active');
+          } else {
+            document.querySelector('#final').classList.add('active');
+          }
+        }
+      }
+
+      function handleNo() {
+        if (noButtonDodgeCount >= maxDodges) {
+          document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+          document.querySelector('#rejected').classList.add('active');
+        }
+      }
+
+      function resetQuestions() {
+        document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+        document.querySelector('#q1').classList.add('active');
+        noButtonDodgeCount = 0;
+      }
+
+      function redirectToLetter() {
+        window.location.href = "surat.html";  // Arahkan ke halaman index.html
+      }
+    </script>
+  </body>
+</html>
